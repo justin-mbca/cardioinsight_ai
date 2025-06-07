@@ -1,0 +1,86 @@
+{
+  "data_dir": "data",
+  "models_dir": "models",
+  "results_dir": "results",
+  "use_gpu": true,
+  "default_model": "dl_model",
+  "server_url": null,
+  "api_key": null,
+  "logging": {
+    "level": "INFO",
+    "file": "cardioinsight.log",
+    "console": true
+  },
+  "preprocessing": {
+    "filter_lowcut": 0.5,
+    "filter_highcut": 50.0,
+    "normalize": true,
+    "remove_baseline": true,
+    "resample_rate": 250
+  },
+  "feature_extraction": {
+    "time_domain": true,
+    "frequency_domain": true,
+    "wavelet_domain": true,
+    "statistical_features": true
+  },
+  "ml_models": {
+    "random_forest": {
+      "n_estimators": 100,
+      "max_depth": 10
+    },
+    "svm": {
+      "kernel": "rbf",
+      "C": 1.0
+    },
+    "xgboost": {
+      "n_estimators": 100,
+      "learning_rate": 0.1,
+      "max_depth": 5
+    }
+  },
+  "dl_models": {
+    "cnn": {
+      "filters": [32, 64, 128],
+      "kernel_size": 3,
+      "pool_size": 2,
+      "dropout_rate": 0.3
+    },
+    "lstm": {
+      "units": [64, 32],
+      "dropout_rate": 0.2
+    },
+    "transformer": {
+      "num_layers": 4,
+      "d_model": 128,
+      "num_heads": 8,
+      "dff": 512,
+      "dropout_rate": 0.1
+    }
+  },
+  "explainability": {
+    "methods": ["grad_cam", "shap", "lime"],
+    "visualize": true,
+    "save_explanations": true
+  },
+  "multimodal_fusion": {
+    "fusion_method": "late",
+    "clinical_data_weight": 0.3,
+    "ecg_data_weight": 0.7
+  },
+  "teaching_module": {
+    "case_library_path": "data/case_library",
+    "difficulty_levels": ["easy", "medium", "hard"],
+    "quiz_time_limit": 600
+  },
+  "remote_healthcare": {
+    "model_optimization": {
+      "quantization": true,
+      "pruning": true,
+      "target_size_mb": 10
+    },
+    "sync_interval": 3600,
+    "offline_mode": true
+  }
+}
+

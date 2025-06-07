@@ -1,0 +1,51 @@
+CardioInsight AI - 项目结构
+
+cardioinsight_ai/
+│
+├── __init__.py                  # 项目初始化文件
+├── ecg_preprocessing.py         # 心电图预处理模块
+├── feature_extraction.py        # 特征提取模块
+├── ml_models.py                 # 机器学习模型模块
+├── dl_models.py                 # 深度学习模型模块
+├── explainability.py            # 可解释性模块
+├── multimodal_fusion.py         # 多模态融合模块
+├── dynamic_ecg_annotation.py    # 动态ECG自动标注模块
+├── teaching_module.py           # AI医生辅助教学模块
+├── remote_healthcare.py         # 基层/远程医疗适配模块
+├── main.py                      # 主程序
+│
+├── data/                        # 数据目录
+│   ├── raw/                     # 原始数据
+│   ├── processed/               # 处理后的数据
+│   └── case_library/            # 教学案例库
+│
+├── models/                      # 模型目录
+│   ├── ml_models/               # 机器学习模型
+│   ├── dl_models/               # 深度学习模型
+│   └── optimized/               # 优化后的模型
+│
+├── utils/                       # 工具函数
+│   ├── data_utils.py            # 数据处理工具
+│   ├── model_utils.py           # 模型工具
+│   └── visualization.py         # 可视化工具
+│
+├── visualization/               # 可视化模块
+│   ├── ecg_plots.py             # 心电图绘制
+│   └── explanation_plots.py     # 解释可视化
+│
+├── examples/                    # 示例脚本
+│   ├── basic_analysis.py        # 基本分析示例
+│   ├── multimodal_analysis.py   # 多模态分析示例
+│   ├── remote_healthcare.py     # 远程医疗示例
+│   └── teaching_module.py       # 教学模块示例
+│
+├── tests/                       # 测试目录
+│   ├── test_preprocessing.py    # 预处理测试
+│   ├── test_features.py         # 特征提取测试
+│   └── test_models.py           # 模型测试
+│
+├── setup.py                     # 安装脚本
+├── requirements.txt             # 依赖列表
+├── README.md                    # 项目说明
+└── INSTALL.md                   # 安装指南
+
