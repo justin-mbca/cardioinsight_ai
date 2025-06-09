@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+
+{% block title %}CardioInsight AI - Analyze ECG{% endblock %}
+
+{% block head %}
+<style>
+    .analysis-options {
+        transition: all 0.3s ease;
+    }
+    .file-preview {
+        min-height: 100px;
+    }
+    .advanced-options {
+        border-top: 1px solid #dee2e6;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line me-2"></i>
+            Analyze ECG
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Analysis Form -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">ECG Analysis</h5>
+            </div>
+            <div class="card-body">
+                <form class="analysis-form" method="POST" enctype="multipart/form-data" action="{{ url_for('analysis.analyze') }}">
+                    {{ form.csrf_token }}
+                    
+                    <!-- File Upload -->
+                    <div class="mb-4">
+                        <label for="ecg_file" class="form-label">ECG File</label>
+                        <div class="file-upload">
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="ecg_file" name="ecg_file" accept=".csv,.txt,.mat,.npy,.npz">
+                                <button class="btn btn-outline-secondary" type="button" id="file_info_btn" data-bs-toggle="tooltip" title="Supported formats: CSV, TXT, MAT, NPY, NPZ">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Upload ECG data file (CSV, TXT, MAT, NPY, NPZ)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Preview -->
+                    <div class="file-preview mb-4"></div>
+                    
+                    <!-- File Options (will be populated by JavaScript) -->
+                    <div class="file-options mb-4"></div>
+                    
+                    <!-- Analysis Type -->
+                    <div class="mb-4">
+                        <label for="analysis_type" class="form-label">Analysis Type</label>
+                        <select class="form-select" id="analysis_type" name="analysis_type">
+                            <option value="rhythm" selected>Rhythm Analysis</option>
+                            <option value="morphology">Morphology Analysis</option>
+                            <option value="comprehensive">Comprehensive Analysis</option>
+                            <option value="custom">Custom Analysis</option>
+                        </select>
+                        <div class="form-text">Select the type of analysis to perform</div>
+                    </div>
+                    
+                    <!-- Model Type -->
+                    <div class="mb-4">
+                        <label for="model_type" class="form-label">Model Type</label>
+                        <select class="form-select" id="model_type" name="model_type">
+                            <option value="ml">Machine Learning</option>
+                            <option value="dl" selected>Deep Learning</option>
+                        </select>
+                        <div class="form-text">Select the type of model to use for analysis</div>
+                    </div>
+                    
+                    <!-- ML Model Selection (hidden by default) -->
+                    <div class="mb-4 d-none">
+                        <label for="ml_model" class="form-label">ML Model</label>
+                        <select class="form-select" id="ml_model" name="ml_model">
+                            <option value="random_forest" selected>Random Forest</option>
+                            <option value="svm">Support Vector Machine</option>
+                            <option value="xgboost">XGBoost</option>
+                            <option value="logistic_regression">Logistic Regression</option>
+                        </select>
+                        <div class="form-text">Select the machine learning model to use</div>
+                    </div>
+                    
+                    <!-- DL Model Selection -->
+                    <div class="mb-4">
+                        <label for="dl_model" class="form-label">DL Model</label>
+                        <select class="form-select" id="dl_model" name="dl_model">
+                            <option value="cnn" selected>CNN</option>
+                            <option value="resnet">ResNet</option>
+                            <option value="lstm">LSTM</option>
+                            <option value="transformer">Transformer</option>
+                        </select>
+                        <div class="form-text">Select the deep learning model to use</div>
+                    </div>
+                    
+                    <!-- Explainability -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="explainability" name="explainability" checked>
+                            <label class="form-check-label" for="explainability">Enable Explainability</label>
+                        </div>
+                        <div class="form-text">Generate explanations for the analysis results</div>
+                    </div>
+                    
+                    <!-- Advanced Options Toggle -->
+                    <div class="mb-4">
+                        <a href="#" class="advanced-toggle btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog me-1"></i> Show Advanced Options
+                        </a>
+                    </div>
+                    
+                    <!-- Advanced Options (hidden by default) -->
+                    <div class="advanced-options d-none">
+                        <h6 class="mb-3">Advanced Options</h6>
+                        
+                        <!-- Confidence Threshold -->
+                        <div class="mb-3">
+                            <label for="confidence_threshold" class="form-label">Confidence Threshold</label>
+                            <input type="range" class="form-range" min="0" max="1" step="0.01" value="0.5" id="confidence_threshold" name="confidence_threshold">
+                            <div class="d-flex justify-content-between">
+                                <span>0.0</span>
+                                <span id="confidence_value">0.5</span>
+                                <span>1.0</span>
+                            </div>
+                            <div class="form-text">Minimum confidence level for predictions</div>
+                        </div>
+                        
+                        <!-- Multimodal Fusion -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="multimodal" name="multimodal">
+                                <label class="form-check-label" for="multimodal">Enable Multimodal Fusion</label>
+                            </div>
+                            <div class="form-text">Combine ECG data with other clinical information</div>
+                        </div>
+                        
+                        <!-- Clinical Information (hidden by default) -->
+                        <div class="mb-3 clinical-info d-none">
+                            <label for="clinical_info" class="form-label">Clinical Information</label>
+                            <textarea class="form-control" id="clinical_info" name="clinical_info" rows="3" placeholder="Enter patient symptoms, medical history, or other relevant information..."></textarea>
+                        </div>
+                        
+                        <!-- Preprocessing Options -->
+                        <div class="mb-3">
+                            <label class="form-label">Preprocessing Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="denoise" name="denoise" checked>
+                                <label class="form-check-label" for="denoise">Denoise Signal</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="normalize" name="normalize" checked>
+                                <label class="form-check-label" for="normalize">Normalize Signal</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="segment" name="segment" checked>
+                                <label class="form-check-label" for="segment">Segment Beats</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i> Run Analysis
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-redo me-1"></i> Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analysis Info -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Analysis Information</h5>
+            </div>
+            <div class="card-body">
+                <h6>Available Models</h6>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        CNN
+                        <span class="badge bg-primary rounded-pill">12-lead</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ResNet
+                        <span class="badge bg-primary rounded-pill">12-lead</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        LSTM
+                        <span class="badge bg-success rounded-pill">Dynamic</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Transformer
+                        <span class="badge bg-info rounded-pill">Multimodal</span>
+                    </li>
+                </ul>
+                
+                <h6>Supported Conditions</h6>
+                <div class="mb-3">
+                    <span class="badge bg-primary me-1 mb-1">Normal Sinus Rhythm</span>
+                    <span class="badge bg-primary me-1 mb-1">Atrial Fibrillation</span>
+                    <span class="badge bg-primary me-1 mb-1">Atrial Flutter</span>
+                    <span class="badge bg-primary me-1 mb-1">AV Block</span>
+                    <span class="badge bg-primary me-1 mb-1">Bundle Branch Block</span>
+                    <span class="badge bg-primary me-1 mb-1">Premature Contraction</span>
+                    <span class="badge bg-primary me-1 mb-1">ST Elevation</span>
+                    <span class="badge bg-primary me-1 mb-1">ST Depression</span>
+                    <span class="badge bg-primary me-1 mb-1">T Wave Abnormality</span>
+                    <span class="badge bg-primary me-1 mb-1">QT Prolongation</span>
+                    <span class="badge bg-primary me-1 mb-1">Myocardial Infarction</span>
+                    <span class="badge bg-primary me-1 mb-1">Ventricular Hypertrophy</span>
+                </div>
+                
+                <h6>Analysis Types</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Rhythm Analysis:</strong> Focuses on heart rhythm abnormalities</li>
+                    <li><strong>Morphology Analysis:</strong> Examines wave shapes and intervals</li>
+                    <li><strong>Comprehensive Analysis:</strong> Complete ECG interpretation</li>
+                    <li><strong>Custom Analysis:</strong> User-defined analysis parameters</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Recent Analyses</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if recent_analyses %}
+                        {% for analysis in recent_analyses[:5] %}
+                        <a href="{{ url_for('analysis.view_result', result_id=analysis.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ analysis.filename }}</h6>
+                                <small>{{ analysis.timestamp }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <span class="badge bg-primary">{{ analysis.prediction }}</span>
+                                <small class="text-muted ms-2">Confidence: {{ (analysis.confidence * 100)|round(1) }}%</small>
+                            </p>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-0 text-center">No recent analyses</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if recent_analyses %}
+            <div class="card-footer bg-light">
+                <a href="{{ url_for('analysis.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Toggle advanced options
+        const advancedToggle = document.querySelector('.advanced-toggle');
+        const advancedOptions = document.querySelector('.advanced-options');
+        
+        advancedToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            advancedOptions.classList.toggle('d-none');
+            
+            // Update toggle text
+            if (advancedOptions.classList.contains('d-none')) {
+                advancedToggle.innerHTML = '<i class="fas fa-cog me-1"></i> Show Advanced Options';
+            } else {
+                advancedToggle.innerHTML = '<i class="fas fa-cog me-1"></i> Hide Advanced Options';
+            }
+        });
+        
+        // Handle model selection
+        const modelTypeSelect = document.querySelector('#model_type');
+        const mlModelSelect = document.querySelector('#ml_model').parentElement;
+        const dlModelSelect = document.querySelector('#dl_model').parentElement;
+        
+        modelTypeSelect.addEventListener('change', function() {
+            if (this.value === 'ml') {
+                mlModelSelect.classList.remove('d-none');
+                dlModelSelect.classList.add('d-none');
+            } else {
+                mlModelSelect.classList.add('d-none');
+                dlModelSelect.classList.remove('d-none');
+            }
+        });
+        
+        // Handle multimodal fusion
+        const multimodalCheckbox = document.querySelector('#multimodal');
+        const clinicalInfoDiv = document.querySelector('.clinical-info');
+        
+        multimodalCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                clinicalInfoDiv.classList.remove('d-none');
+            } else {
+                clinicalInfoDiv.classList.add('d-none');
+            }
+        });
+        
+        // Update confidence threshold value
+        const confidenceThreshold = document.querySelector('#confidence_threshold');
+        const confidenceValue = document.querySelector('#confidence_value');
+        
+        confidenceThreshold.addEventListener('input', function() {
+            confidenceValue.textContent = this.value;
+        });
+        
+        // Handle file upload preview
+        const fileInput = document.querySelector('#ecg_file');
+        const filePreview = document.querySelector('.file-preview');
+        
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+                const fileType = file.type || 'Unknown';
+                
+                filePreview.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>File:</strong> ${fileName}<br>
+                        <strong>Size:</strong> ${fileSize}<br>
+                        <strong>Type:</strong> ${fileType}
+                    </div>
+                `;
+                
+                // Show file options based on file type
+                showFileOptions(fileName);
+            } else {
+                filePreview.innerHTML = '';
+                document.querySelector('.file-options').innerHTML = '';
+            }
+        });
+        
+        function showFileOptions(fileName) {
+            const optionsContainer = document.querySelector('.file-options');
+            const fileExt = fileName.split('.').pop().toLowerCase();
+            
+            let optionsHTML = '';
+            
+            if (fileExt === 'csv' || fileExt === 'txt') {
+                optionsHTML = `
+                    <div class="card">
+                        <div class="card-header bg-light">CSV/TXT Options</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="delimiter" class="form-label">Delimiter</label>
+                                <select class="form-select" id="delimiter" name="delimiter">
+                                    <option value="comma" selected>Comma (,)</option>
+                                    <option value="semicolon">Semicolon (;)</option>
+                                    <option value="tab">Tab</option>
+                                    <option value="space">Space</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="header" class="form-label">Header Row</label>
+                                <select class="form-select" id="header" name="header">
+                                    <option value="true" selected>Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sampling_rate" class="form-label">Sampling Rate (Hz)</label>
+                                <input type="number" class="form-control" id="sampling_rate" name="sampling_rate" value="250">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (fileExt === 'npy' || fileExt === 'npz') {
+                optionsHTML = `
+                    <div class="card">
+                        <div class="card-header bg-light">NumPy Options</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="sampling_rate" class="form-label">Sampling Rate (Hz)</label>
+                                <input type="number" class="form-control" id="sampling_rate" name="sampling_rate" value="250">
+                            </div>
+                            <div class="mb-3">
+                                <label for="data_format" class="form-label">Data Format</label>
+                                <select class="form-select" id="data_format" name="data_format">
+                                    <option value="samples_leads" selected>Samples × Leads</option>
+                                    <option value="leads_samples">Leads × Samples</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (fileExt === 'mat') {
+                optionsHTML = `
+                    <div class="card">
+                        <div class="card-header bg-light">MATLAB Options</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="variable_name" class="form-label">Variable Name</label>
+                                <input type="text" class="form-control" id="variable_name" name="variable_name" placeholder="e.g., ecg_data">
+                            </div>
+                            <div class="mb-3">
+                                <label for="sampling_rate" class="form-label">Sampling Rate (Hz)</label>
+                                <input type="number" class="form-control" id="sampling_rate" name="sampling_rate" value="250">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            optionsContainer.innerHTML = optionsHTML;
+        }
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Basic ECG Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Upload ECG File for Basic Analysis</h2>
+    <form method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="ecg_file" class="form-label">Choose ECG File (.csv)</label>
+            <input type="file" name="ecg_file" id="ecg_file" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="sampling_rate" class="form-label">Sampling Rate (Hz)</label>
+            <input type="text" name="sampling_rate" id="sampling_rate" class="form-control">
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="use_dl" id="use_dl" value="true" checked>
+            <label class="form-check-label" for="use_dl">Use Deep Learning</label>
+        </div>
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="explain" id="explain" value="true" checked>
+            <label class="form-check-label" for="explain">Generate Explanation</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Run Basic Analysis</button>
+    </form>
+</div>
+{% endblock %}

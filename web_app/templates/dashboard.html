@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+
+{% block title %}CardioInsight AI - Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    .stat-card {
+        border-radius: 10px;
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        font-size: 2.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Quick Actions -->
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Quick Actions</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-line me-1"></i> Analyze ECG
+                    </a>
+                    <a href="{{ url_for('data.upload') }}" class="btn btn-success">
+                        <i class="fas fa-upload me-1"></i> Upload Data
+                    </a>
+                    <a href="{{ url_for('visualization.ecg') }}" class="btn btn-info">
+                        <i class="fas fa-chart-area me-1"></i> Visualize ECG
+                    </a>
+                    <a href="{{ url_for('teaching') }}" class="btn btn-warning">
+                        <i class="fas fa-graduation-cap me-1"></i> Teaching Module
+                    </a>
+                    <a href="{{ url_for('remote') }}" class="btn btn-danger">
+                        <i class="fas fa-clinic-medical me-1"></i> Remote Healthcare
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Statistics -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-3">
+                        <i class="fas fa-file-medical stat-icon"></i>
+                    </div>
+                    <div class="col-9 text-end">
+                        <h5 class="card-title">Analyses</h5>
+                        <h3 class="mb-0">{{ recent_analyses|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-3">
+                        <i class="fas fa-brain stat-icon"></i>
+                    </div>
+                    <div class="col-9 text-end">
+                        <h5 class="card-title">ML Models</h5>
+                        <h3 class="mb-0">{{ ml_models|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-info text-white shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-3">
+                        <i class="fas fa-network-wired stat-icon"></i>
+                    </div>
+                    <div class="col-9 text-end">
+                        <h5 class="card-title">DL Models</h5>
+                        <h3 class="mb-0">{{ dl_models|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-3">
+                        <i class="fas fa-heartbeat stat-icon"></i>
+                    </div>
+                    <div class="col-9 text-end">
+                        <h5 class="card-title">System Status</h5>
+                        <h3 class="mb-0">Active</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Analyses -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Recent Analyses</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Filename</th>
+                                <th>Prediction</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_analyses %}
+                                {% for analysis in recent_analyses %}
+                                <tr>
+                                    <td>{{ analysis.timestamp }}</td>
+                                    <td>{{ analysis.filename }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ analysis.prediction }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ analysis.confidence * 100 }}%;" aria-valuenow="{{ analysis.confidence * 100 }}" aria-valuemin="0" aria-valuemax="100">{{ (analysis.confidence * 100)|round(1) }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('analysis.view_result', result_id=analysis.filename) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No recent analyses</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <a href="{{ url_for('analysis.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Information -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">System Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Version
+                        <span class="badge bg-primary rounded-pill">1.0.0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ML Models
+                        <span class="badge bg-success rounded-pill">{{ ml_models|length }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        DL Models
+                        <span class="badge bg-info rounded-pill">{{ dl_models|length }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        GPU Support
+                        <span class="badge bg-warning rounded-pill">Enabled</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Multimodal Fusion
+                        <span class="badge bg-success rounded-pill">Available</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Explainability
+                        <span class="badge bg-success rounded-pill">Available</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer bg-light">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#systemInfoModal">
+                    <i class="fas fa-info-circle me-1"></i> More Info
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Info Modal -->
+<div class="modal fade" id="systemInfoModal" tabindex="-1" aria-labelledby="systemInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="systemInfoModalLabel">System Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>System</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Version
+                                <span>1.0.0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Platform
+                                <span>Linux</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Python
+                                <span>3.8.10</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                TensorFlow
+                                <span>2.9.0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                PyTorch
+                                <span>1.12.0</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Features</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Multi-Lead Analysis
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Explainability
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Multimodal Fusion
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Dynamic ECG
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Teaching Module
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Remote Healthcare
+                                <span class="badge bg-success">Enabled</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6>Hardware</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                CPU
+                                <span>Intel(R) Xeon(R) CPU @ 2.20GHz</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Memory
+                                <span>16 GB</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                GPU
+                                <span>NVIDIA Tesla T4</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                CUDA
+                                <span>11.2</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add any dashboard-specific JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard loaded');
+    });
+</script>
+{% endblock %}
+

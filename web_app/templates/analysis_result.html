@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+
+{% block title %}CardioInsight AI - Analysis Result{% endblock %}
+
+{% block head %}
+<style>
+    .result-container {
+        background-color: #fff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .prediction-badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+    }
+    
+    .confidence-meter {
+        height: 10px;
+        border-radius: 5px;
+        margin-top: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .explanation-container {
+        background-color: #fff;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-top: 1.5rem;
+    }
+    
+    .ecg-plot {
+        width: 100%;
+        height: 300px;
+    }
+    
+    .heatmap-plot {
+        width: 100%;
+        height: 300px;
+    }
+    
+    .nav-pills .nav-link {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .feature-importance {
+        height: 250px;
+    }
+    
+    .abnormality-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('analysis.index') }}">Analysis</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Result</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>
+                Analysis Result
+            </h1>
+            <div>
+                <a href="{{ url_for('analysis.download_report', result_id=result.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-download me-1"></i> Download Report
+                </a>
+                <a href="{{ url_for('analysis.analyze') }}" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-plus me-1"></i> New Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Result -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">ECG Analysis</h5>
+            </div>
+            <div class="card-body">
+                <!-- Result Summary -->
+                <div class="result-container mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Primary Diagnosis</h5>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="prediction-badge bg-primary me-3">Atrial Fibrillation</span>
+                                <div class="ms-2">
+                                    <small class="text-muted d-block">Confidence</small>
+                                    <div class="progress confidence-meter">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 87%;" aria-valuenow="87" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-muted">87% confidence</small>
+                                </div>
+                            </div>
+                            
+                            <h5>Secondary Findings</h5>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-secondary">Left Ventricular Hypertrophy</span>
+                                <span class="badge bg-secondary">T Wave Abnormality</span>
+                                <span class="badge bg-secondary">Prolonged QT Interval</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Analysis Details</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">File</th>
+                                        <td>patient_123.csv</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Analysis Type</th>
+                                        <td>Comprehensive</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Model</th>
+                                        <td>ResNet (Deep Learning)</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Date</th>
+                                        <td>2023-06-06 14:30:25</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ECG Visualization -->
+                <h5>ECG Visualization</h5>
+                <ul class="nav nav-pills mb-3" id="ecg-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="all-leads-tab" data-bs-toggle="pill" data-bs-target="#all-leads" type="button" role="tab" aria-controls="all-leads" aria-selected="true">All Leads</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lead-i-tab" data-bs-toggle="pill" data-bs-target="#lead-i" type="button" role="tab" aria-controls="lead-i" aria-selected="false">Lead I</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lead-ii-tab" data-bs-toggle="pill" data-bs-target="#lead-ii" type="button" role="tab" aria-controls="lead-ii" aria-selected="false">Lead II</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lead-v1-tab" data-bs-toggle="pill" data-bs-target="#lead-v1" type="button" role="tab" aria-controls="lead-v1" aria-selected="false">Lead V1</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="rhythm-tab" data-bs-toggle="pill" data-bs-target="#rhythm" type="button" role="tab" aria-controls="rhythm" aria-selected="false">Rhythm</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="ecg-tabs-content">
+                    <div class="tab-pane fade show active" id="all-leads" role="tabpanel" aria-labelledby="all-leads-tab">
+                        <div id="all-leads-plot" class="ecg-plot"></div>
+                    </div>
+                    <div class="tab-pane fade" id="lead-i" role="tabpanel" aria-labelledby="lead-i-tab">
+                        <div id="lead-i-plot" class="ecg-plot"></div>
+                    </div>
+                    <div class="tab-pane fade" id="lead-ii" role="tabpanel" aria-labelledby="lead-ii-tab">
+                        <div id="lead-ii-plot" class="ecg-plot"></div>
+                    </div>
+                    <div class="tab-pane fade" id="lead-v1" role="tabpanel" aria-labelledby="lead-v1-tab">
+                        <div id="lead-v1-plot" class="ecg-plot"></div>
+                    </div>
+                    <div class="tab-pane fade" id="rhythm" role="tabpanel" aria-labelledby="rhythm-tab">
+                        <div id="rhythm-plot" class="ecg-plot"></div>
+                    </div>
+                </div>
+                
+                <!-- Explainability -->
+                <div class="explanation-container mt-4">
+                    <h5>Explanation</h5>
+                    <p>The model has identified patterns consistent with Atrial Fibrillation, characterized by irregular R-R intervals and absence of P waves. The highlighted regions show the most influential segments for this diagnosis.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6>Attention Map</h6>
+                            <div id="heatmap-plot" class="heatmap-plot"></div>
+                            <small class="text-muted">Grad-CAM visualization showing regions of interest for the diagnosis</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Feature Importance</h6>
+                            <div id="feature-importance-plot" class="feature-importance"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Key Findings</h6>
+                            <ul>
+                                <li>Irregular R-R intervals (high variability)</li>
+                                <li>Absence of distinct P waves</li>
+                                <li>Fibrillatory waves (f waves) present</li>
+                                <li>Normal QRS complexes</li>
+                                <li>Ventricular rate within normal range</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4 mb-4">
+        <!-- Measurements -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Measurements</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Heart Rate</th>
+                            <td>98 bpm</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">PR Interval</th>
+                            <td>Not measurable</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">QRS Duration</th>
+                            <td>96 ms</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">QT Interval</th>
+                            <td>420 ms</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">QTc Interval</th>
+                            <td>460 ms</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">P Wave</th>
+                            <td>Absent</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">R-R Variability</th>
+                            <td>High (irregular)</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Axis</th>
+                            <td>Normal</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Abnormalities -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Detected Abnormalities</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush abnormality-list">
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Atrial Fibrillation</h6>
+                            <span class="badge bg-danger">Primary</span>
+                        </div>
+                        <p class="mb-1">Irregular rhythm without P waves, with fibrillatory waves</p>
+                        <small class="text-muted">Confidence: 87%</small>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Left Ventricular Hypertrophy</h6>
+                            <span class="badge bg-warning">Secondary</span>
+                        </div>
+                        <p class="mb-1">Increased QRS amplitude in left precordial leads</p>
+                        <small class="text-muted">Confidence: 72%</small>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">T Wave Abnormality</h6>
+                            <span class="badge bg-warning">Secondary</span>
+                        </div>
+                        <p class="mb-1">Flattened T waves in lateral leads</p>
+                        <small class="text-muted">Confidence: 68%</small>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Prolonged QT Interval</h6>
+                            <span class="badge bg-warning">Secondary</span>
+                        </div>
+                        <p class="mb-1">QTc of 460 ms (borderline prolonged)</p>
+                        <small class="text-muted">Confidence: 65%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Clinical Recommendations -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Clinical Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This is an AI-generated analysis. Please consult a healthcare professional for clinical decisions.
+                </div>
+                
+                <h6>Suggested Actions</h6>
+                <ul>
+                    <li>Confirm diagnosis with clinical correlation</li>
+                    <li>Consider anticoagulation therapy assessment</li>
+                    <li>Evaluate for rate control or rhythm control strategy</li>
+                    <li>Assess for underlying structural heart disease</li>
+                    <li>Consider echocardiogram to evaluate LVH finding</li>
+                </ul>
+                
+                <h6>Differential Diagnosis</h6>
+                <ul>
+                    <li>Atrial Flutter with variable conduction</li>
+                    <li>Multifocal Atrial Tachycardia</li>
+                    <li>Frequent PACs/PJCs</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sample ECG data (would be replaced with actual data from backend)
+        function generateECGData(leads, samples) {
+            const result = [];
+            for (let i = 0; i < leads; i++) {
+                const trace = {
+                    y: [],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: `Lead ${i+1}`
+                };
+                
+                let phase = Math.random() * 2 * Math.PI;
+                let amplitude = 0.5 + Math.random() * 0.5;
+                
+                for (let j = 0; j < samples; j++) {
+                    // Base sine wave
+                    let value = Math.sin(j / 10 + phase) * amplitude;
+                    
+                    // Add QRS complex every 50 samples
+                    if (j % 50 === 25) {
+                        value = 2 + Math.random() * 0.5;
+                    } else if (j % 50 === 26) {
+                        value = -1 - Math.random() * 0.5;
+                    } else if (j % 50 === 27) {
+                        value = 0.5 + Math.random() * 0.3;
+                    }
+                    
+                    // Add noise
+                    value += (Math.random() - 0.5) * 0.1;
+                    
+                    trace.y.push(value);
+                }
+                result.push(trace);
+            }
+            return result;
+        }
+        
+        // Plot all leads
+        const allLeadsData = generateECGData(12, 500);
+        const allLeadsLayout = {
+            title: '12-Lead ECG',
+            xaxis: {
+                title: 'Samples',
+                showgrid: true,
+                zeroline: true
+            },
+            yaxis: {
+                title: 'Amplitude (mV)',
+                showgrid: true,
+                zeroline: true
+            },
+            grid: {rows: 4, columns: 3, pattern: 'independent'},
+            height: 600
+        };
+        Plotly.newPlot('all-leads-plot', allLeadsData, allLeadsLayout);
+        
+        // Plot individual leads
+        const leadIData = [allLeadsData[0]];
+        const leadILayout = {
+            title: 'Lead I',
+            xaxis: {
+                title: 'Samples',
+                showgrid: true,
+                zeroline: true
+            },
+            yaxis: {
+                title: 'Amplitude (mV)',
+                showgrid: true,
+                zeroline: true
+            }
+        };
+        Plotly.newPlot('lead-i-plot', leadIData, leadILayout);
+        
+        const leadIIData = [allLeadsData[1]];
+        const leadIILayout = {
+            title: 'Lead II',
+            xaxis: {
+                title: 'Samples',
+                showgrid: true,
+                zeroline: true
+            },
+            yaxis: {
+                title: 'Amplitude (mV)',
+                showgrid: true,
+                zeroline: true
+            }
+        };
+        Plotly.newPlot('lead-ii-plot', leadIIData, leadIILayout);
+        
+        const leadV1Data = [allLeadsData[6]];
+        const leadV1Layout = {
+            title: 'Lead V1',
+            xaxis: {
+                title: 'Samples',
+                showgrid: true,
+                zeroline: true
+            },
+            yaxis: {
+                title: 'Amplitude (mV)',
+                showgrid: true,
+                zeroline: true
+            }
+        };
+        Plotly.newPlot('lead-v1-plot', leadV1Data, leadV1Layout);
+        
+        // Plot rhythm strip
+        const rhythmData = [allLeadsData[1]]; // Using Lead II for rhythm
+        const rhythmLayout = {
+            title: 'Rhythm Strip (Lead II)',
+            xaxis: {
+                title: 'Samples',
+                showgrid: true,
+                zeroline: true
+            },
+            yaxis: {
+                title: 'Amplitude (mV)',
+                showgrid: true,
+                zeroline: true
+            }
+        };
+        Plotly.newPlot('rhythm-plot', rhythmData, rhythmLayout);
+        
+        // Plot heatmap
+        const heatmapData = [{
+            z: [
+                Array(500).fill(0).map((_, i) => {
+                    // Highlight regions of interest
+                    if ((i > 20 && i < 30) || (i > 70 && i < 80) || (i > 120 && i < 130) || 
+                        (i > 170 && i < 180) || (i > 220 && i < 230) || (i > 270 && i < 280)) {
+                        return 0.8 + Math.random() * 0.2;
+                    } else if ((i > 15 && i < 35) || (i > 65 && i < 85) || (i > 115 && i < 135) || 
+                               (i > 165 && i < 185) || (i > 215 && i < 235) || (i > 265 && i < 285)) {
+                        return 0.4 + Math.random() * 0.4;
+                    } else {
+                        return Math.random() * 0.3;
+                    }
+                })
+            ],
+            type: 'heatmap',
+            colorscale: 'Hot'
+        }];
+        
+        const heatmapLayout = {
+            title: 'Attention Heatmap',
+            xaxis: {
+                title: 'Samples',
+                showgrid: false
+            },
+            yaxis: {
+                showticklabels: false,
+                showgrid: false
+            }
+        };
+        
+        Plotly.newPlot('heatmap-plot', heatmapData, heatmapLayout);
+        
+        // Plot feature importance
+        const featureData = [{
+            x: ['R-R Irregularity', 'P Wave Absence', 'F Wave Presence', 'QRS Duration', 'Heart Rate', 'QT Interval'],
+            y: [0.35, 0.28, 0.18, 0.08, 0.06, 0.05],
+            type: 'bar',
+            marker: {
+                color: ['rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 0.8)', 
+                        'rgba(13, 110, 253, 0.5)', 'rgba(13, 110, 253, 0.5)', 'rgba(13, 110, 253, 0.5)']
+            }
+        }];
+        
+        const featureLayout = {
+            title: 'Feature Importance',
+            xaxis: {
+                title: 'Feature'
+            },
+            yaxis: {
+                title: 'Importance',
+                range: [0, 0.4]
+            },
+            margin: {
+                l: 50,
+                r: 20,
+                t: 30,
+                b: 100
+            }
+        };
+        
+        Plotly.newPlot('feature-importance-plot', featureData, featureLayout);
+    });
+</script>
+{% endblock %}
+

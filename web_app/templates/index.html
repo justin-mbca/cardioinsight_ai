@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}CardioInsight AI - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1 class="display-4">
+            <i class="fas fa-heartbeat text-danger me-3"></i>
+            CardioInsight AI
+        </h1>
+        <p class="lead">
+            A multi-modal intelligent ECG analysis and assisted diagnosis system
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    ECG Analysis
+                </h2>
+                <p class="card-text">
+                    Upload and analyze ECG data with our advanced AI models. Get accurate diagnoses with confidence scores and visual explanations.
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <a href="{{ url_for('analysis.basic') }}" class="btn btn-sm btn-outline-primary">Basic Analysis</a>
+                        <a href="{{ url_for('analysis.multimodal') }}" class="btn btn-sm btn-outline-primary">Multimodal Analysis</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-area text-success me-2"></i>
+                    Visualization
+                </h2>
+                <p class="card-text">
+                    Visualize ECG data with interactive plots. Explore different views including single lead, multi-lead, and 12-lead formats.
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <a href="{{ url_for('visualization.ecg') }}" class="btn btn-sm btn-outline-success">ECG Visualization</a>
+                        <a href="{{ url_for('visualization.explanation') }}" class="btn btn-sm btn-outline-success">Explanation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-graduation-cap text-info me-2"></i>
+                    Teaching
+                </h2>
+                <p class="card-text">
+                    Access our teaching module with case libraries, quizzes, and learning resources for medical professionals.
+                </p>
+                <a href="{{ url_for('teaching') }}" class="btn btn-sm btn-outline-info">Explore Teaching Module</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-clinic-medical text-danger me-2"></i>
+                    Remote Healthcare
+                </h2>
+                <p class="card-text">
+                    Use our remote healthcare features for telemedicine consultations and remote ECG analysis.
+                </p>
+                <a href="{{ url_for('remote') }}" class="btn btn-sm btn-outline-danger">Remote Healthcare</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-database text-warning me-2"></i>
+                    Data Management
+                </h2>
+                <p class="card-text">
+                    Upload, manage, and preprocess your ECG data. Support for various formats including CSV, MAT, and WFDB.
+                </p>
+                <a href="{{ url_for('data.index') }}" class="btn btn-sm btn-outline-warning">Manage Data</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Key Features</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
+                            <h4>Multi-Lead Analysis</h4>
+                            <p>Support for 12-lead ECG analysis with higher diagnostic accuracy</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-lightbulb fa-3x text-warning mb-3"></i>
+                            <h4>Explainable AI</h4>
+                            <p>Visualize which parts of the ECG influenced the diagnosis</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-project-diagram fa-3x text-success mb-3"></i>
+                            <h4>Multimodal Fusion</h4>
+                            <p>Combine ECG data with clinical information for better diagnoses</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                            <h4>Dynamic ECG Analysis</h4>
+                            <p>Process 24-hour Holter data with automatic event detection</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-chalkboard-teacher fa-3x text-danger mb-3"></i>
+                            <h4>Teaching Module</h4>
+                            <p>Train medical professionals with case libraries and quizzes</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-mobile-alt fa-3x text-secondary mb-3"></i>
+                            <h4>Remote Healthcare</h4>
+                            <p>Optimized for low-resource environments and telemedicine</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12 text-center">
+        <h2>Ready to get started?</h2>
+        <p class="lead">Upload your ECG data and see what CardioInsight AI can do.</p>
+        <a href="{{ url_for('analyze') }}" class="btn btn-lg btn-primary mt-3">
+            <i class="fas fa-play-circle me-2"></i>
+            Start Analysis
+        </a>
+    </div>
+</div>
+{% endblock %}
+
